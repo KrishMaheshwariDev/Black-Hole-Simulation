@@ -1,9 +1,9 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <iostream>
 
-class VertexArray {
+namespace SOGL {
+    class VertexArray {
     private:
         GLuint id;
 
@@ -18,6 +18,7 @@ class VertexArray {
         VertexArray& operator=(VertexArray&& other) noexcept;
 
         void bind() const;
+        void unbind() const;
 
         void AddAttribute(
             GLuint index,
@@ -28,3 +29,4 @@ class VertexArray {
             const void* offset
         );
 };
+}

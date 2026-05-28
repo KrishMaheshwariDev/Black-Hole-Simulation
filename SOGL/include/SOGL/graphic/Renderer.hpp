@@ -4,7 +4,9 @@
 #include "../shaders/Shader.hpp"
 #include "Mesh.hpp"
 
-class Renderer{
-    public:
-        static void Draw(const Mesh& mesh, const Shader& shader);
-};
+namespace SOGL {
+    class Renderer{
+        public:
+            static void Draw(const Mesh& mesh, const Shader& shader);
+    };
+}

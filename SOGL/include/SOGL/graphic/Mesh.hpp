@@ -1,42 +1,51 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <vector>
-#include <glm/glm.hpp>
-#include <iostream>
-#include "Buffer.hpp"
+#include <cstddef>
+
+#include "MeshData.hpp"
 #include "VertexArray.hpp"
+#include "Buffer.hpp"
 
-class Mesh{
+namespace SOGL
+{
+    class Mesh
+    {
     public:
-        // Non-Index data
-        Mesh(   
-            const void* vertexData,
-            size_t vertexSize,
-            GLsizei vertexCount,
-            GLsizei stride
-        );
+        Mesh(const MeshData& meshData);
 
-        // Index Data
-        Mesh(
-            const void* vertexData,
-            size_t vertexSize,
-            GLsizei vertexCount,
-            GLsizei stride,
-            const void* indexData,
-            size_t indexSize,
-            GLsizei indexCount
-        );
+        ~Mesh() = default;
+
+    public:
+        void Bind() const;
+        void Unbind() const;
+
         void Draw() const;
 
+    public:
+        [[nodiscard]]
+        size_t GetVertexCount() const;
+
+        [[nodiscard]]
+        size_t GetIndexCount() const;
+
+        [[nodiscard]]
+        bool HasIndices() const;
+
     private:
-        VertexArray VAO;
-        Buffer VBO;
-        Buffer EBO;
+        void UploadMeshData(const MeshData& meshData);
 
-        GLsizei vertexCount;
-        GLsizei indexCount;
+        void SetupVertexAttributes();
 
-        GLenum drawMode;
-        bool hasIndicies;
-};
+    private:
+        VertexArray m_VAO;
+
+        Buffer m_VBO;
+        Buffer m_EBO;
+
+    private:
+        size_t m_VertexCount {0};
+        size_t m_IndexCount  {0};
+
+        bool m_HasIndices {false};
+    };
+}

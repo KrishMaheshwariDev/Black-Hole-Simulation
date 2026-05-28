@@ -4,7 +4,8 @@
 #include <glfw/glfw3.h>
 #include <iostream>
 
-class Window{
+namespace SOGL {
+    class Window{
     private:
         GLFWwindow* window;
         int width, height;
@@ -29,3 +30,4 @@ class Window{
 
         GLFWwindow* getNativeWindow() const;
 };
+}

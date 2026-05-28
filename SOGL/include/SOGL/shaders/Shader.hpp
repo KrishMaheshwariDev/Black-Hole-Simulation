@@ -7,7 +7,8 @@
 #include <sstream>
 #include <glad/glad.h>
 
-class Shader
+namespace SOGL {
+    class Shader
 {
 private:
     unsigned int ID;
@@ -25,4 +26,4 @@ public:
     void setVec3(const std::string& name, float x, float y, float z);
     void setMat4(const std::string& name, const float* matrix);
 };
-
+}

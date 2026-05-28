@@ -1,10 +1,10 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <iostream>
 #include <vector>
 
-class Buffer{
+namespace SOGL {
+    class Buffer{
     private:
         GLuint id;
         GLenum target;
@@ -20,6 +20,7 @@ class Buffer{
 
         // bind and unbind the buffer
         void bind() const;
+        void unbind() const;
 
         // Data and Data size for memory allocation
         void SetData(const void* data, size_t size, GLenum usage);
@@ -32,3 +33,4 @@ class Buffer{
         void SetSubData(const void* data, size_t size, size_t offset);
 
 };
+}

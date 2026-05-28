@@ -55,7 +55,7 @@ target_include_directories(
     PRIVATE
 
     src
-    SOGL
+    SOGL/include
 
     libs/glad/include
     libs/glfw/include

@@ -8,7 +8,8 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 // class methods
-Window::Window(int width, int height, const char* title): width(width), height(height){
+namespace SOGL{
+    Window::Window(int width, int height, const char* title): width(width), height(height){
     if(!glfwInit()){
         throw std::runtime_error("ERROR::WINDOW - GLFW initialization failed\n");
     }
@@ -77,4 +78,5 @@ void Window::pollEvents() const{
 
 GLFWwindow* Window::getNativeWindow() const{
     return window;
+}
 }

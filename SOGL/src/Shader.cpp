@@ -1,6 +1,7 @@
 #include "../include/SOGL/shaders/Shader.hpp"
 
-std::string Shader::loadFile(const char* filePath){
+namespace SOGL {
+    std::string Shader::loadFile(const char* filePath){
     std::ifstream file(filePath);
 
     if(!file.is_open()){
@@ -89,4 +90,5 @@ void Shader::setVec3(const std::string& name, float x, float y, float z){
         return;
     }
     glUniform3f(location, x, y, z);
+}
 }

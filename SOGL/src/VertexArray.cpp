@@ -1,6 +1,7 @@
 #include "../include/SOGL/graphic/VertexArray.hpp"
 
-VertexArray::VertexArray(){
+namespace SOGL {
+    VertexArray::VertexArray(){
     glGenVertexArrays(1, &id);
 }
 
@@ -28,6 +29,10 @@ void VertexArray::bind() const{
     glBindVertexArray(id);
 }
 
+void VertexArray::unbind() const{
+    glBindVertexArray(0);
+}
+
 void VertexArray::AddAttribute(
     GLuint index,
     GLint size,
@@ -38,4 +43,6 @@ void VertexArray::AddAttribute(
     ){
         glEnableVertexAttribArray(index);
         glVertexAttribPointer(index, size, type, normalized, stride, offset);
+}
+
 }
