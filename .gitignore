@@ -30,6 +30,9 @@ compile_commands.json
 # VSCode
 .vscode/
 
+# Continue
+.continue
+
 # Visual Studio
 .vs/
 *.vcxproj*

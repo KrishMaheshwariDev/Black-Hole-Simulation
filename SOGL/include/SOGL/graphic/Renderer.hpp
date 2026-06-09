@@ -2,11 +2,12 @@
 
 #include <glad/glad.h>
 #include "../shaders/Shader.hpp"
-#include "Mesh.hpp"
+// #include "Mesh.hpp"
 
 namespace SOGL {
     class Renderer{
         public:
-            static void Draw(const Mesh& mesh, const Shader& shader);
+            template<typename T>
+            static void Draw(const T mesh, const Shader& shader);
     };
 }
