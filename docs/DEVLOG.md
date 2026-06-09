@@ -11,7 +11,7 @@ Tasks Completed:
 Pushed Work :
 - the project structure with libs and SOGL
 - .gitignore is ready and won't cause problem for now
-
+---
 # Day - 2
 
 Tasks Completed:
@@ -60,3 +60,43 @@ OpenGL
 - Renderer architecture is now significantly cleaner and easier to extend later
 - Future systems like model loading, PBR, animation, and Vulkan backend migration are now structurally possible without rewriting core mesh systems
 - OpenGL still behaves like a state-machine cryptid from 1992, but the pipeline survived today
+
+---
+# Day - 3
+
+Tasks Completed:
+- Finalized rendering architecture for V1 black hole simulation
+- Defined rendering responsibilities and separation between geometry and simulation
+- Designed CircleMesh API
+- Studied mathematical representation of circles and circle generation algorithms
+- Implemented indexed circle mesh generation using triangle fan topology
+- Integrated CircleMesh with SOGL MeshData and Mesh pipeline
+- Added support for configurable radius and segment count
+- Generated circle vertices using trigonometric parametrization
+- Generated index buffer for closed circle topology
+- Successfully rendered and validated:
+  - Triangle (3 segments)
+  - Square (4 segments)
+  - Circle approximation (64 segments)
+- Verified vertex layout compatibility with SOGL framework
+- Completed first custom renderable object outside of SOGL
+
+Challenges Faced:
+- Mesh construction dependency on MeshData initialization
+- Designing reusable geometry separate from simulation objects
+- Understanding indexed mesh topology and circle closure logic
+- Adapting circle generation to SOGL's triangle-only rendering pipeline
+
+Key Learnings:
+- OpenGL does not provide circles as primitives; circles are approximated using generated vertices
+- Circle points can be generated using:
+  x = r * cos(θ)
+  y = r * sin(θ)
+- Indexed meshes reduce duplicated vertices and improve geometry reuse
+- Geometry, rendering, and simulation should remain independent systems
+- SOGL Mesh abstraction currently supports triangle-based rendering only
+
+Project Status:
+- CircleMesh implementation complete and tested
+- Rendering foundation established
+- Ready to design Black Hole render object and particle rendering system
