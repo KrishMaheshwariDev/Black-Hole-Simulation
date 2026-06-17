@@ -21,6 +21,7 @@ public:
     ~Shader();
 
     void use() const;
+    int getID() const;
     
     void setFloat(const std::string& name, float value);
     void setVec3(const std::string& name, float x, float y, float z);

@@ -69,6 +69,10 @@ void Shader::use() const{
     glUseProgram(ID);
 }
 
+int Shader::getID() const{
+    return ID;
+}
+
 void Shader::setMat4(const std::string& name, const float* matrix){
     int location = glGetUniformLocation(ID, name.c_str());
     glUniformMatrix4fv(location, 1, GL_FALSE, matrix);

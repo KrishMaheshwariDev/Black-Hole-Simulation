@@ -5,7 +5,9 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 layout(location = 3) in vec3 aTangent;
 
+uniform mat4 uProjection;
+
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = uProjection * vec4(aPos, 1.0);
 }
