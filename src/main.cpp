@@ -12,8 +12,11 @@
 #include <SOGL/graphic/Renderer.hpp>
 #include <SOGL/shaders/Shader.hpp>
 
-#include "rendering/mesh/CircleMesh.hpp"
-
+#include "core/Logger.hpp"
+#include "core/TickSystem.hpp"
+#include "rendering/particle/PointRenderer.hpp"
+#include "simulation/PhysicsSystem.hpp"
+#include "simulation/SimulationWorld.hpp"
 
 /*
 For Nvidia GPU based renderering
@@ -66,10 +69,60 @@ glm::mat4 CreateProjection(int width, int height){
 
 int main() {
     // Initialize the window
+    Core::Logger::Info("Main", "Starting Black Hole Simulation");
+
     Window window(1280, 720, "SOGL Example");
     Shader shader("../assets/shaders/basic.vert", "../assets/shaders/basic.frag");
+    Shader particleShader("../assets/shaders/particle.vert", "../assets/shaders/particle.frag");
+    PointRenderer pointRenderer;
+    FixedTimestep fixedTimestep(20.0f);
+    PhysicsSystem physicsSystem;
+    SimulationWorld world;
 
-    CircleMesh circle(0.5f, 64);
+    world.blackHoles.emplace_back(
+        0.22f,
+        64,
+        Transform{
+            .position = {0.0f, 0.0f},
+            .rotation = 0.0f,
+            .scale = {1.0f, 1.0f}
+        },
+        PhysicsBody{
+            .mass = 1000.0f,
+            .velocity = {0.0f, 0.0f},
+            .accumulatedForce = {0.0f, 0.0f},
+            .isStatic = true
+        },
+        0.22f
+    );
+
+    world.planets.emplace_back(
+        0.08f,
+        64,
+        Transform{
+            .position = {-0.7f, 0.2f},
+            .rotation = 0.0f,
+            .scale = {1.0f, 1.0f}
+        },
+        PhysicsBody{
+            .mass = 10.0f,
+            .velocity = {0.35f, 0.0f}
+        }
+    );
+
+    world.lightParticles.emplace_back(
+        5.0f,
+        Transform{
+            .position = {-0.25f, -0.45f},
+            .rotation = 0.0f,
+            .scale = {1.0f, 1.0f}
+        },
+        PhysicsBody{
+            .mass = 0.1f,
+            .velocity = {0.6f, 0.25f}
+        },
+        glm::vec4{1.0f, 0.95f, 0.7f, 1.0f}
+    );
 
     // FPS counter
     double fpsTimer = glfwGetTime();
@@ -102,7 +155,18 @@ int main() {
             1.0f
         );
         window.clearColor();
-        shader.use();
+
+        fixedTimestep.update();
+
+        while (fixedTimestep.HasPendingTick())
+        {
+            physicsSystem.Update(
+                world,
+                fixedTimestep.GetFixedDeltaTime()
+            );
+
+            fixedTimestep.ConsumeTick();
+        }
 
         // Projection Handling for Window Resize
         int width, height;
@@ -117,18 +181,48 @@ int main() {
         glm::mat4 projection =
             CreateProjection(width, height);
 
-        glUniformMatrix4fv(
-            glGetUniformLocation(
-                shader.getID(),
-                "uProjection"
-            ),
-            1,
-            GL_FALSE,
-            glm::value_ptr(projection)
-        );
+        shader.use();
+        shader.setMat4("uProjection", glm::value_ptr(projection));
+        Core::Logger::LogOpenGLErrors("Main", "basic shader projection upload");
+
+        particleShader.use();
+        particleShader.setMat4("uProjection", glm::value_ptr(projection));
+        Core::Logger::LogOpenGLErrors("Main", "particle shader projection upload");
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_PROGRAM_POINT_SIZE);
+        Core::Logger::LogOpenGLErrors("Main", "frame render state setup");
 
         // Element or Object Rendering Calls
-        circle.draw();
+        for (const auto& blackHole : world.blackHoles)
+        {
+            blackHole.Draw(shader);
+        }
+
+        for (const auto& planet : world.planets)
+        {
+            planet.Draw(shader);
+        }
+
+        for (const auto& lightParticle : world.lightParticles)
+        {
+            pointRenderer.DrawTrail(
+                particleShader,
+                lightParticle.trail,
+                lightParticle.trailLifetimeSeconds,
+                lightParticle.pointSize,
+                lightParticle.color
+            );
+
+            pointRenderer.DrawParticle(
+                particleShader,
+                lightParticle.transform.position,
+                lightParticle.pointSize,
+                lightParticle.color
+            );
+        }
+
         window.swapBuffers();
     }
     return 0;

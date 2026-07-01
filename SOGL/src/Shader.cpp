@@ -1,11 +1,13 @@
 #include "../include/SOGL/shaders/Shader.hpp"
 
+#include "core/Logger.hpp"
+
 namespace SOGL {
     std::string Shader::loadFile(const char* filePath){
     std::ifstream file(filePath);
 
     if(!file.is_open()){
-        std::cout << "Error:  failed to open file\n";
+        Core::Logger::Error("Shader", std::string("Failed to open file: ") + filePath);
         return "";
     }
 
@@ -33,7 +35,7 @@ Shader::Shader(const char* vertPath, const char* fragPath){
     if (!success)
     {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        Core::Logger::Error("Shader", std::string("Vertex compilation failed:\n") + infoLog);
     }
 
     fragShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -43,7 +45,7 @@ Shader::Shader(const char* vertPath, const char* fragPath){
     if (!success)
     {
         glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        Core::Logger::Error("Shader", std::string("Fragment compilation failed:\n") + infoLog);
     }
 
     // linking the shader program
@@ -54,7 +56,7 @@ Shader::Shader(const char* vertPath, const char* fragPath){
     glGetProgramiv(ID, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(ID, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        Core::Logger::Error("Shader", std::string("Program linking failed:\n") + infoLog);
     }
 
     glDeleteShader(vertexShader);
@@ -73,26 +75,39 @@ int Shader::getID() const{
     return ID;
 }
 
-void Shader::setMat4(const std::string& name, const float* matrix){
+void Shader::setMat4(const std::string& name, const float* matrix) const{
     int location = glGetUniformLocation(ID, name.c_str());
+    if (location == -1) {
+        Core::Logger::Warn("Shader", std::string("Uniform not found: ") + name);
+        return;
+    }
     glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
 }
 
-void Shader::setFloat(const std::string& name, float value){
+void Shader::setFloat(const std::string& name, float value) const{
     int location = glGetUniformLocation(ID, name.c_str());
     if (location == -1) {
-        std::cout << "Warning: uniform not found -> " << name << std::endl;
+        Core::Logger::Warn("Shader", std::string("Uniform not found: ") + name);
         return;
     }
     glUniform1f(location, value);
 }
 
-void Shader::setVec3(const std::string& name, float x, float y, float z){
+void Shader::setVec3(const std::string& name, float x, float y, float z) const{
     int location = glGetUniformLocation(ID, name.c_str());
     if (location == -1) {
-        std::cout << "Warning: uniform not found -> " << name << std::endl;
+        Core::Logger::Warn("Shader", std::string("Uniform not found: ") + name);
         return;
     }
     glUniform3f(location, x, y, z);
+}
+
+void Shader::setVec4(const std::string& name, float x, float y, float z, float w) const{
+    int location = glGetUniformLocation(ID, name.c_str());
+    if (location == -1) {
+        Core::Logger::Warn("Shader", std::string("Uniform not found: ") + name);
+        return;
+    }
+    glUniform4f(location, x, y, z, w);
 }
 }

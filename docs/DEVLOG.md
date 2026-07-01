@@ -462,3 +462,424 @@ Current Progress:
 4. Implement `BlackHole`
 5. Implement `GravitySystem`
 6. Integrate Euler-based physics updates
+---
+# Day - 5
+
+## Objectives
+- Introduce a reusable transform system
+- Support per-object runtime positioning through model matrices
+- Remove origin-locked rendering behavior from simulation objects
+
+---
+
+## Tasks Completed
+
+### Transform System
+- Added `Transform` fields for `position`, `rotation`, and `scale`
+- Implemented `Transform::GetMatrix()` using GLM
+- Established model-matrix generation for renderable simulation objects
+
+### Rendering Integration
+- Added `uModel` support to the rendering pipeline
+- Updated the vertex shader to apply `uProjection * uModel`
+- Refactored `CircleMesh` draw flow to accept an external `Transform`
+
+### Runtime Object Control
+- Separated geometry from per-instance transform state
+- Enabled compile-time initialization of object transforms in `main.cpp`
+- Enabled runtime transform mutation for future simulation-driven updates
+
+---
+
+## Architecture Decisions
+
+### Object Rendering Flow
+
+```text
+Local Mesh Geometry
+        ↓
+   Transform
+        ↓
+   Model Matrix
+        ↓
+  Projection Matrix
+        ↓
+     Screen
+```
+
+### Simulation Ownership Model
+
+```text
+Geometry
+    ↓
+Entity Owns Transform
+    ↓
+Simulation Updates Transform
+    ↓
+Renderer Draws Latest State
+```
+
+---
+
+## Key Learnings
+
+- Geometry should stay authored in local space while transforms define world placement.
+- Object transforms should not be embedded inside reusable mesh generators.
+- Model matrices create a clean handoff between simulation state and rendering state.
+
+---
+
+## Challenges Faced
+
+- Avoiding hard-coded object positions inside render objects.
+- Designing a transform flow that works both at startup and during runtime updates.
+- Preserving the earlier rendering abstraction while introducing per-instance state.
+
+---
+
+## Project Status
+
+The project now supports dynamic object placement through a dedicated transform system, which prepares the simulation layer for true per-entity motion.
+
+Current Progress:
+
+```text
+[✓] Rendering Framework
+[✓] Mesh Architecture
+[✓] CircleMesh
+[✓] Shader Pipeline
+[✓] FPS Monitoring
+[✓] Orthographic Projection
+[✓] Transform System
+[ ] Black Hole Entity
+[ ] Physics System
+[ ] Particle System
+```
+
+---
+
+## Next Steps
+
+1. Create simulation entities that own geometry, transform, and physics
+2. Build a fixed-timestep global physics update loop
+3. Separate render updates from physics updates
+4. Introduce particle-specific simulation objects
+
+---
+# Day - 6
+
+## Objectives
+- Introduce proper simulation entities
+- Build a global fixed-timestep physics update path
+- Prepare the simulation architecture for future systems such as gravity
+
+---
+
+## Tasks Completed
+
+### Entity System
+- Refactored `Planet` to own geometry, transform, and physics body
+- Refactored `BlackHole` to own geometry, transform, and physics body
+- Added dedicated `LightParticle` simulation entity
+
+### Physics Foundation
+- Extended `PhysicsBody` with accumulated force support
+- Added acceleration calculation from force and mass
+- Added force clearing and static-body handling
+- Created `PhysicsSystem` as a step-based global simulation updater
+
+### World Organization
+- Added `SimulationWorld` container to own global simulation state
+- Integrated `FixedTimestep` into `main.cpp` at `20 TPS`
+- Separated physics ticking from render-frame drawing
+
+---
+
+## Architecture Decisions
+
+### Entity Composition
+
+```text
+Entity
+ ├── Geometry
+ ├── Transform
+ └── PhysicsBody
+```
+
+### Physics Update Flow
+
+```text
+Fixed Timestep
+      ↓
+ PhysicsSystem
+      ↓
+  Physics Steps
+      ↓
+ Entity State Update
+      ↓
+ Renderer Draws Latest State
+```
+
+---
+
+## Key Learnings
+
+- A global simulation world simplifies cross-entity system updates.
+- Step-based physics pipelines are easier to extend than single monolithic update functions.
+- Decoupling render FPS from simulation TPS gives more predictable simulation behavior.
+
+---
+
+## Challenges Faced
+
+- Making simulation entities own GPU-backed geometry safely.
+- Preserving a simple architecture while creating room for future systems.
+- Structuring physics in a way that supports gravity and additional update passes later.
+
+---
+
+## Project Status
+
+The project now has a real simulation layer with entity ownership and a fixed-timestep physics pipeline, even though only basic integration is implemented so far.
+
+Current Progress:
+
+```text
+[✓] Rendering Framework
+[✓] Mesh Architecture
+[✓] CircleMesh
+[✓] Shader Pipeline
+[✓] FPS Monitoring
+[✓] Orthographic Projection
+[✓] Transform System
+[✓] Black Hole Entity
+[✓] Planet Entity
+[✓] Fixed Timestep Physics Loop
+[ ] Gravity System
+[ ] Particle Trail Rendering
+```
+
+---
+
+## Next Steps
+
+1. Improve light-particle rendering
+2. Add visible particle trails for motion debugging
+3. Introduce point-based light rendering instead of mesh-based rendering
+4. Improve diagnostics for render and shader failures
+
+---
+# Day - 7
+
+## Objectives
+- Convert light particles into point-like light rays
+- Add visible fading trails for motion visualization
+- Extend the rendering layer with a particle-specific draw path
+
+---
+
+## Tasks Completed
+
+### Particle Redesign
+- Removed circle-mesh rendering from `LightParticle`
+- Converted light particles into point-sized simulation objects
+- Added per-particle color and point-size control
+
+### Trail Rendering
+- Added trail history tracking using `TrailPoint`
+- Added trail aging and pruning logic
+- Implemented fading trail rendering using alpha falloff
+- Implemented point-size falloff across older trail samples
+
+### Particle Rendering Pipeline
+- Added `PointRenderer`
+- Added dedicated particle vertex and fragment shaders
+- Enabled point-size rendering and alpha blending for particles
+
+---
+
+## Architecture Decisions
+
+### Light Particle Representation
+
+```text
+LightParticle
+ ├── Transform
+ ├── PhysicsBody
+ ├── Point Size
+ ├── Color
+ └── Trail History
+```
+
+### Particle Rendering Flow
+
+```text
+LightParticle State
+        ↓
+ Recorded Trail Points
+        ↓
+ PointRenderer
+        ↓
+ Particle Shader
+        ↓
+ Fading Trail On Screen
+```
+
+---
+
+## Key Learnings
+
+- Light rays are better represented as points than as circular meshes for this simulation style.
+- Trails are valuable not only visually, but also for debugging motion and system behavior.
+- Dedicated render paths are justified when object classes differ fundamentally in representation.
+
+---
+
+## Challenges Faced
+
+- Converting particles away from mesh-based rendering without disturbing the rest of the pipeline.
+- Designing trail fading using only simple point rendering.
+- Keeping particle rendering independent from the mesh shader path.
+
+---
+
+## Project Status
+
+The simulation now includes visible, ray-like light particles with fading motion trails, giving the system its first dynamic particle visualization.
+
+Current Progress:
+
+```text
+[✓] Rendering Framework
+[✓] Mesh Architecture
+[✓] CircleMesh
+[✓] Shader Pipeline
+[✓] FPS Monitoring
+[✓] Orthographic Projection
+[✓] Transform System
+[✓] Black Hole Entity
+[✓] Planet Entity
+[✓] Fixed Timestep Physics Loop
+[✓] Light Particle Representation
+[✓] Fading Trail Rendering
+[ ] Gravity System
+[ ] Diagnostics Module
+```
+
+---
+
+## Next Steps
+
+1. Improve runtime diagnostics
+2. Add centralized logging
+3. Track OpenGL state and shader issues more reliably
+4. Fix render-state interactions between mesh rendering and particle rendering
+
+---
+# Day - 8
+
+## Objectives
+- Introduce centralized runtime logging
+- Diagnose silent rendering failures in the updated render pipeline
+- Fix interaction bugs between particle rendering and mesh rendering
+
+---
+
+## Tasks Completed
+
+### Logging Infrastructure
+- Added a shared `Logger` module
+- Added centralized `Info`, `Warn`, and `Error` logging helpers
+- Added OpenGL error polling through `Logger::LogOpenGLErrors`
+- Reduced repeated console spam by suppressing duplicate warnings and errors
+
+### Rendering Bug Investigation
+- Diagnosed invalid OpenGL usage in buffer unbinding
+- Fixed `Buffer::unbind()` to unbind using the correct target
+- Diagnosed shader-state mismatch between mesh rendering and particle rendering
+- Fixed projection uniform uploads so each shader is updated while bound
+
+### Render Pipeline Stabilization
+- Updated mesh draw flow to explicitly bind its shader before uploading model uniforms
+- Improved shader uniform diagnostics, including missing `mat4` uniforms
+- Preserved the particle rendering path while restoring black hole and planet rendering
+
+---
+
+## Architecture Decisions
+
+### Diagnostic Flow
+
+```text
+Runtime Action
+      ↓
+ Logger
+      ↓
+ OpenGL Error Check
+      ↓
+ Console Output
+```
+
+### Multi-Shader Safety Model
+
+```text
+Bind Shader
+    ↓
+Upload Uniforms
+    ↓
+Issue Draw Call
+    ↓
+Validate OpenGL State
+```
+
+---
+
+## Key Learnings
+
+- OpenGL errors can remain queued and mislead later diagnostics if not isolated carefully.
+- Silent state bugs are common when multiple shader programs share the same frame.
+- Logging needs deduplication or it quickly becomes noise during render-loop failures.
+
+---
+
+## Challenges Faced
+
+- Tracing the real source of `GL_INVALID_ENUM` through repeated downstream reports.
+- Identifying that projection uploads were targeting the wrong active shader program.
+- Improving diagnostics without overwhelming the console every frame.
+
+---
+
+## Project Status
+
+The project now has a centralized diagnostics path and a corrected mixed-renderer pipeline, making both debugging and runtime stability much stronger.
+
+Current Progress:
+
+```text
+[✓] Rendering Framework
+[✓] Mesh Architecture
+[✓] CircleMesh
+[✓] Shader Pipeline
+[✓] FPS Monitoring
+[✓] Orthographic Projection
+[✓] Transform System
+[✓] Black Hole Entity
+[✓] Planet Entity
+[✓] Fixed Timestep Physics Loop
+[✓] Light Particle Representation
+[✓] Fading Trail Rendering
+[✓] Logger Module
+[✓] Render State Diagnostics
+[ ] Gravity System
+[ ] Orbital Dynamics
+```
+
+---
+
+## Next Steps
+
+1. Implement the gravity system as a new physics step
+2. Apply gravitational force between black holes, planets, and light particles as needed
+3. Validate stable orbital behavior at fixed timestep
+4. Expand diagnostics as new physics systems are added

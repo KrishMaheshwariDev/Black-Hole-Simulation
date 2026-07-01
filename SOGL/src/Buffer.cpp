@@ -31,7 +31,7 @@ void SOGL::Buffer::bind() const{
 }
 
 void SOGL::Buffer::unbind() const{
-    glBindBuffer(0, id);
+    glBindBuffer(target, 0);
 }
 
 void SOGL::Buffer::SetData(const void* data, size_t size, GLenum usage){

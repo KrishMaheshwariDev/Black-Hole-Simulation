@@ -1,15 +1,26 @@
 #include "CircleMesh.hpp"
+
+#include <glm/gtc/type_ptr.hpp>
+
+#include "core/Logger.hpp"
 #include "SOGL/graphic/MeshData.hpp"
 
 CircleMesh::CircleMesh(
     float radius,
     unsigned int segments
 )
-    :
-    mesh(CreateMeshData(radius, segments)){}
+    : mesh(CreateMeshData(radius, segments))
+{}
 
-void CircleMesh::draw(){
+void CircleMesh::draw(const SOGL::Shader& shader, const Transform& transform) const{
+    shader.use();
+    shader.setMat4(
+        "uModel",
+        glm::value_ptr(transform.GetMatrix())
+    );
+
     mesh.Draw();
+    Core::Logger::LogOpenGLErrors("CircleMesh", "mesh draw");
 }
 
 SOGL::MeshData CircleMesh::CreateMeshData(float radius, unsigned int segments){
