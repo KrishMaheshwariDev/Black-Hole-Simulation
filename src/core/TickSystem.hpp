@@ -14,6 +14,7 @@ class FixedTimestep{
         void ConsumeTick();
 
         float GetFixedDeltaTime() const;
+        float GetLastFrameTime() const;
 
     private:
         float m_TicksPerSecond;
@@ -21,4 +22,5 @@ class FixedTimestep{
 
         float m_Accumulator;
         float m_LastTime;
+        float m_LastFrameTime;
 };

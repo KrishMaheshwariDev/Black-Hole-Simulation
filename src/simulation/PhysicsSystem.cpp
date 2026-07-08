@@ -1,5 +1,7 @@
 #include "PhysicsSystem.hpp"
 
+#include <glm/geometric.hpp>
+
 #include "GravityModule.hpp"
 
 namespace
@@ -46,21 +48,46 @@ namespace
         }
     }
 
-    void UpdateLightParticleTrails(SimulationWorld& world, float deltaTime)
+    template <typename Body>
+    bool IsInsideAnyBlackHole(const Body& body, const SimulationWorld& world)
     {
-        for (auto& lightParticle : world.lightParticles)
+        for (const auto& blackHole : world.blackHoles)
         {
-            lightParticle.UpdateTrail(deltaTime);
-            lightParticle.RecordTrailPoint();
+            const glm::vec2 offset = body.transform.position - blackHole.transform.position;
+            const float collisionDistance = blackHole.eventHorizonRadius + body.collisionRadius;
+            if (glm::dot(offset, offset) <= collisionDistance * collisionDistance)
+            {
+                return true;
+            }
         }
+
+        return false;
     }
+
+    void ResolveBlackHoleCollisions(SimulationWorld& world, float)
+    {
+        world.planets.remove_if(
+            [&world](const Planet& planet)
+            {
+                return IsInsideAnyBlackHole(planet, world);
+            }
+        );
+
+        world.lightParticles.remove_if(
+            [&world](const LightParticle& lightParticle)
+            {
+                return IsInsideAnyBlackHole(lightParticle, world);
+            }
+        );
+    }
+
 }
 
 PhysicsSystem::PhysicsSystem()
 {
     AddStep(ApplyGravity);
     AddStep(IntegrateBodies);
-    AddStep(UpdateLightParticleTrails);
+    AddStep(ResolveBlackHoleCollisions);
 }
 
 void PhysicsSystem::AddStep(PhysicsStep step)

@@ -61,6 +61,7 @@ void PointRenderer::DrawParticle(
 
     shader.use();
     shader.setVec4("uColor", color.r, color.g, color.b, color.a);
+    shader.setFloat("uRenderAsPoint", 1.0f);
 
     m_VAO.bind();
     m_VBO.bind();
@@ -89,25 +90,34 @@ void PointRenderer::DrawTrail(
     std::vector<PointVertex> vertices;
     vertices.reserve(trail.size());
 
-    for (const auto& point : trail)
+    for (std::size_t index = 0; index < trail.size(); ++index)
     {
+        const auto& point = trail[index];
         const float normalizedAge = std::clamp(
             point.ageSeconds / trailLifetimeSeconds,
             0.0f,
             1.0f
         );
+        const float normalizedIndex =
+            trail.size() > 1
+                ? static_cast<float>(index) / static_cast<float>(trail.size() - 1)
+                : 1.0f;
+        const float fadeAlpha =
+            (1.0f - normalizedAge) *
+            std::clamp(normalizedIndex * normalizedIndex, 0.0f, 1.0f);
 
         vertices.push_back(
             PointVertex{
                 .position = point.position,
-                .alpha = 1.0f - normalizedAge,
-                .size = headSize * (1.0f - (0.6f * normalizedAge))
+                .alpha = fadeAlpha,
+                .size = headSize
             }
         );
     }
 
     shader.use();
     shader.setVec4("uColor", color.r, color.g, color.b, color.a);
+    shader.setFloat("uRenderAsPoint", 0.0f);
 
     m_VAO.bind();
     m_VBO.bind();
@@ -117,7 +127,8 @@ void PointRenderer::DrawTrail(
         GL_DYNAMIC_DRAW
     );
 
-    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(vertices.size()));
+    glLineWidth(std::max(1.0f, headSize * 0.35f));
+    glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(vertices.size()));
 
     m_VBO.unbind();
     m_VAO.unbind();

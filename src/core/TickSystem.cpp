@@ -1,10 +1,13 @@
 #include "TickSystem.hpp"
 
+#include "Config.hpp"
+
 FixedTimestep::FixedTimestep(float ticksPerSecond)
     : m_TicksPerSecond(ticksPerSecond),
       m_FixedDeltaTime(1.0f / ticksPerSecond),
       m_Accumulator(0.0f),
-      m_LastTime(static_cast<float>(glfwGetTime()))
+      m_LastTime(static_cast<float>(glfwGetTime())),
+      m_LastFrameTime(0.0f)
 {
 }
 
@@ -15,6 +18,7 @@ void FixedTimestep::update()
     float frameTime = currentTime - m_LastTime;
     frameTime = std::min(frameTime, 0.25f);
     m_LastTime = currentTime;
+    m_LastFrameTime = frameTime;
 
     m_Accumulator += frameTime;
 }
@@ -31,5 +35,10 @@ void FixedTimestep::ConsumeTick()
 
 float FixedTimestep::GetFixedDeltaTime() const
 {
-    return m_FixedDeltaTime;
+    return m_FixedDeltaTime * Config::Simulation::kTimeScale;
+}
+
+float FixedTimestep::GetLastFrameTime() const
+{
+    return m_LastFrameTime;
 }

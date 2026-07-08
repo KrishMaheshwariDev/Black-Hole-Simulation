@@ -21,8 +21,9 @@ struct LightParticle
     Transform transform;
     PhysicsBody physics;
 
-    float pointSize{8.0f};
-    glm::vec4 color{1.0f, 0.95f, 0.7f, 1.0f};
+    float pointSize{Config::Particles::kDefaultPointSize};
+    glm::vec4 color{Config::Particles::kDefaultColor};
+    float collisionRadius{0.0f};
 
     float lifetimeSeconds{Config::Particles::kDefaultLifetimeSeconds};
     float ageSeconds{0.0f};
@@ -35,14 +36,31 @@ struct LightParticle
         float initialPointSize,
         Transform initialTransform = {},
         PhysicsBody initialPhysics = {},
-        glm::vec4 initialColor = {1.0f, 0.95f, 0.7f, 1.0f}
+        glm::vec4 initialColor = Config::Particles::kDefaultColor,
+        float initialCollisionRadius = 0.0f
     )
         : transform(initialTransform),
           physics(initialPhysics),
           pointSize(initialPointSize),
-          color(initialColor)
+          color(initialColor),
+          collisionRadius(initialCollisionRadius)
     {
         RecordTrailPoint();
+    }
+
+    void RecordTrailPointIfNeeded(float minimumDistance)
+    {
+        if (trail.empty())
+        {
+            RecordTrailPoint();
+            return;
+        }
+
+        const glm::vec2 offset = transform.position - trail.back().position;
+        if (glm::length(offset) >= minimumDistance)
+        {
+            RecordTrailPoint();
+        }
     }
 
     void RecordTrailPoint()
@@ -60,8 +78,6 @@ struct LightParticle
 
     void UpdateTrail(float deltaTime)
     {
-        ageSeconds += deltaTime;
-
         for (auto& point : trail)
         {
             point.ageSeconds += deltaTime;

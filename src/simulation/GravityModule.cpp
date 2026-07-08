@@ -11,21 +11,15 @@
 
 namespace
 {
-    constexpr float kPixelsPerDistanceUnit = Config::Simulation::kPixelsPerDistanceUnit;
-    constexpr float kKilometersPerDistanceUnit = Config::Simulation::kKilometersPerDistanceUnit;
-    constexpr float kKilometersPerPixel =
-        kKilometersPerDistanceUnit / kPixelsPerDistanceUnit;
-    constexpr float kPixelsPerWorldUnit = Config::Simulation::kPixelsPerWorldUnit;
-    constexpr float kKilometersPerWorldUnit =
-        kKilometersPerPixel * kPixelsPerWorldUnit;
-    constexpr float kGravityConstant = Config::Simulation::kGravityConstant;
-    constexpr float kMinimumDistance = Config::Simulation::kMinimumGravityDistance;
-    constexpr float kMaximumAcceleration = Config::Simulation::kMaximumGravityAcceleration;
+    constexpr double kMetersPerWorldUnit = Config::Simulation::kMetersPerWorldUnit;
+    constexpr double kGravityConstant = Config::Simulation::kGravitationalConstant;
+    constexpr double kMinimumDistance = Config::Simulation::kMinimumGravityDistance;
+    constexpr double kMaximumAcceleration = Config::Simulation::kMaximumGravityAcceleration;
     constexpr const char* kLogSource = "GravityModule";
 
-    float ResolveSafeDistance(float eventHorizonRadius)
+    double ResolveSafeDistance()
     {
-        return std::max(eventHorizonRadius, kMinimumDistance);
+        return kMinimumDistance;
     }
 
     void ApplyBlackHoleGravity(
@@ -52,7 +46,7 @@ namespace
         }
 
         const glm::vec2 offset = blackHole.transform.position - targetTransform.position;
-        const float distanceSquared = glm::dot(offset, offset);
+        const double distanceSquared = glm::dot(offset, offset);
 
         if (!std::isfinite(distanceSquared))
         {
@@ -60,26 +54,30 @@ namespace
             return;
         }
 
-        const float safeDistance = ResolveSafeDistance(blackHole.eventHorizonRadius);
-        const float clampedDistanceSquared = std::max(distanceSquared, safeDistance * safeDistance);
+        const double safeDistance = ResolveSafeDistance();
+        const double clampedDistanceSquared = std::max(distanceSquared, safeDistance * safeDistance);
 
         if (distanceSquared <= kMinimumDistance * kMinimumDistance)
         {
             Core::Logger::Warn(kLogSource, "Body reached the black hole singularity clamp radius");
         }
 
-        const float distance = std::sqrt(clampedDistanceSquared);
-        const glm::vec2 direction = distance > 0.0f ? offset / distance : glm::vec2{0.0f, 0.0f};
-        const float distanceInKilometers = distance * kKilometersPerWorldUnit;
-        const float distanceSquaredInKilometers =
-            distanceInKilometers * distanceInKilometers;
-        const float forceMagnitude =
+        const double distance = std::sqrt(clampedDistanceSquared);
+        const glm::vec2 direction =
+            distance > 0.0
+                ? offset / static_cast<float>(distance)
+                : glm::vec2{0.0f, 0.0f};
+        const double distanceInMeters = distance * kMetersPerWorldUnit;
+        const double accelerationInMetersPerSecondSquared =
             kGravityConstant *
-            targetPhysics.mass *
             blackHole.physics.mass /
-            distanceSquaredInKilometers;
+            (distanceInMeters * distanceInMeters);
+        const double accelerationInWorldUnitsPerSecondSquared =
+            accelerationInMetersPerSecondSquared / kMetersPerWorldUnit;
+        const double forceMagnitude =
+            accelerationInWorldUnitsPerSecondSquared * targetPhysics.mass;
 
-        glm::vec2 gravityForce = direction * forceMagnitude;
+        glm::vec2 gravityForce = direction * static_cast<float>(forceMagnitude);
 
         if (!std::isfinite(gravityForce.x) || !std::isfinite(gravityForce.y))
         {
@@ -91,10 +89,10 @@ namespace
             return;
         }
 
-        const float accelerationMagnitude = glm::length(gravityForce) / targetPhysics.mass;
+        const double accelerationMagnitude = glm::length(gravityForce) / targetPhysics.mass;
         if (accelerationMagnitude > kMaximumAcceleration)
         {
-            gravityForce *= kMaximumAcceleration / accelerationMagnitude;
+            gravityForce *= static_cast<float>(kMaximumAcceleration / accelerationMagnitude);
             Core::Logger::Warn(kLogSource, "Clamped gravity acceleration to keep free-fall stable");
         }
 
