@@ -7,6 +7,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
+#include "Config.hpp"
 #include "SimulationComponents.hpp"
 
 struct TrailPoint
@@ -23,11 +24,11 @@ struct LightParticle
     float pointSize{8.0f};
     glm::vec4 color{1.0f, 0.95f, 0.7f, 1.0f};
 
-    float lifetimeSeconds{5.0f};
+    float lifetimeSeconds{Config::Particles::kDefaultLifetimeSeconds};
     float ageSeconds{0.0f};
 
-    float trailLifetimeSeconds{1.0f};
-    std::size_t maxTrailPoints{24};
+    float trailLifetimeSeconds{Config::Particles::kDefaultTrailLifetimeSeconds};
+    std::size_t maxTrailPoints{Config::Particles::kDefaultMaxTrailPoints};
     std::vector<TrailPoint> trail;
 
     LightParticle(

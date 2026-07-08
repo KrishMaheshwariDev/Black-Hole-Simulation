@@ -4,7 +4,6 @@
 #include <windows.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <glad/glad.h>
@@ -12,6 +11,8 @@
 #include <SOGL/graphic/Renderer.hpp>
 #include <SOGL/shaders/Shader.hpp>
 
+#include "Config.hpp"
+#include "core/Camera2D.hpp"
 #include "core/Logger.hpp"
 #include "core/TickSystem.hpp"
 #include "rendering/particle/PointRenderer.hpp"
@@ -37,36 +38,6 @@ namespace Pollution, TODO: remove the SOGL namespace before deployment, use stan
 */
 using namespace SOGL;
 
-glm::mat4 CreateProjection(int width, int height){
-    if(height == 0){
-        height = 1;
-    }
-    float aspect =
-        static_cast<float>(width) /
-        static_cast<float>(height);
-
-    if(aspect >= 1.0f)
-    {
-        return glm::ortho(
-            -aspect,
-             aspect,
-            -1.0f,
-             1.0f,
-            -1.0f,
-             1.0f
-        );
-    }
-
-    return glm::ortho(
-        -1.0f,
-         1.0f,
-        -1.0f / aspect,
-         1.0f / aspect,
-        -1.0f,
-         1.0f
-    );
-}
-
 int main() {
     // Initialize the window
     Core::Logger::Info("Main", "Starting Black Hole Simulation");
@@ -75,53 +46,54 @@ int main() {
     Shader shader("../assets/shaders/basic.vert", "../assets/shaders/basic.frag");
     Shader particleShader("../assets/shaders/particle.vert", "../assets/shaders/particle.frag");
     PointRenderer pointRenderer;
-    FixedTimestep fixedTimestep(20.0f);
+    FixedTimestep fixedTimestep(Config::Simulation::kFixedTicksPerSecond);
     PhysicsSystem physicsSystem;
+    Camera2D camera;
     SimulationWorld world;
 
     world.blackHoles.emplace_back(
-        0.22f,
-        64,
+        Config::Scene::kBlackHoleRadius,
+        Config::Scene::kBlackHoleSegments,
         Transform{
-            .position = {0.0f, 0.0f},
+            .position = Config::Scene::kBlackHolePosition,
             .rotation = 0.0f,
             .scale = {1.0f, 1.0f}
         },
         PhysicsBody{
-            .mass = 1000.0f,
+            .mass = Config::Scene::kBlackHoleMass,
             .velocity = {0.0f, 0.0f},
             .accumulatedForce = {0.0f, 0.0f},
             .isStatic = true
         },
-        0.22f
+        Config::Scene::kBlackHoleEventHorizonRadius
     );
 
     world.planets.emplace_back(
-        0.08f,
-        64,
+        Config::Scene::kPlanetRadius,
+        Config::Scene::kPlanetSegments,
         Transform{
-            .position = {-0.7f, 0.2f},
+            .position = Config::Scene::kPlanetPosition,
             .rotation = 0.0f,
             .scale = {1.0f, 1.0f}
         },
         PhysicsBody{
-            .mass = 10.0f,
-            .velocity = {0.35f, 0.0f}
+            .mass = Config::Scene::kPlanetMass,
+            .velocity = {0.5f, .25f}
         }
     );
 
     world.lightParticles.emplace_back(
-        5.0f,
+        Config::Scene::kLightParticlePointSize,
         Transform{
-            .position = {-0.25f, -0.45f},
+            .position = Config::Scene::kLightParticlePosition,
             .rotation = 0.0f,
             .scale = {1.0f, 1.0f}
         },
         PhysicsBody{
-            .mass = 0.1f,
-            .velocity = {0.6f, 0.25f}
+            .mass = Config::Scene::kLightParticleMass,
+            .velocity = {0.5f, 0.5f}
         },
-        glm::vec4{1.0f, 0.95f, 0.7f, 1.0f}
+        Config::Scene::kLightParticleColor
     );
 
     // FPS counter
@@ -148,6 +120,9 @@ int main() {
 
         // Window and Rendering
         window.pollEvents();
+        window.processInput();
+        camera.UpdateFromInput(window.getNativeWindow());
+
         glClearColor(
             0.1f,
             0.1f,
@@ -179,7 +154,7 @@ int main() {
         glViewport(0, 0, width, height);
 
         glm::mat4 projection =
-            CreateProjection(width, height);
+            camera.CreateProjection(width, height);
 
         shader.use();
         shader.setMat4("uProjection", glm::value_ptr(projection));

@@ -1,7 +1,20 @@
 #include "PhysicsSystem.hpp"
 
+#include "GravityModule.hpp"
+
 namespace
 {
+    GravityModule& GetGravityModule()
+    {
+        static GravityModule gravityModule;
+        return gravityModule;
+    }
+
+    void ApplyGravity(SimulationWorld& world, float deltaTime)
+    {
+        GetGravityModule().Apply(world, deltaTime);
+    }
+
     void AdvanceBody(Transform& transform, PhysicsBody& physics, float deltaTime)
     {
         if (physics.isStatic)
@@ -45,6 +58,7 @@ namespace
 
 PhysicsSystem::PhysicsSystem()
 {
+    AddStep(ApplyGravity);
     AddStep(IntegrateBodies);
     AddStep(UpdateLightParticleTrails);
 }
